@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>JEWEL DROP</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  background: #1a1c2c;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  font-family: 'Courier New', Courier, monospace;
+  touch-action: none;
+  overflow: hidden;
+}
+
+#outer-frame {
+  background: #2e3350;
+  padding: 6px;
+  border: 4px solid #1a1c2c;
+  box-shadow: 4px 4px 0 #1a1c2c;
+}
+
+#screen {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  background: #f4ead8;
+  border: 3px solid #1a1c2c;
+}
+
+#field-wrap {
+  position: relative;
+  border-right: 3px solid #1a1c2c;
+}
+
+canvas { display: block; }
+
+#side {
+  width: 110px;
+  background: #5a6394;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  padding: 4px;
+  gap: 3px;
+}
+
+.next-box {
+  background: #f4ead8;
+  border: 2px solid #1a1c2c;
+  padding: 3px;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+.stat-box {
+  background: #2e3350;
+  border: 2px solid #1a1c2c;
+  padding: 2px 4px;
+}
+.stat-label {
+  font-size: 9px;
+  font-weight: bold;
+  color: #f4ead8;
+  letter-spacing: 1px;
+  line-height: 1.3;
+}
+.stat-value {
+  font-size: 13px;
+  font-weight: bold;
+  color: #ffd34e;
+  letter-spacing: 2px;
+  text-align: right;
+  line-height: 1.2;
+}
+.stat-value.sm { font-size: 10px; letter-spacing: 1px; }
+
+#overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(26,28,44,0.90);
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 10;
+}
+#overlay h2 {
+  color: #f4ead8;
+  font-size: 15px;
+  letter-spacing: 3px;
+  text-align: center;
+  line-height: 1.5;
+}
+#overlay p {
+  color: #5a6394;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-align: center;
+  line-height: 2;
+}
+.gb-btn {
+  background: #5a6394;
+  border: 0;
+  border-top: 2px solid #ffd34e;
+  border-left: 2px solid #ffd34e;
+  border-right: 2px solid #1a1c2c;
+  border-bottom: 2px solid #1a1c2c;
+  color: #1a1c2c;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 6px 16px;
+  cursor: pointer;
+}
+
+#controls {
+  display: -webkit-flex;
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  -webkit-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-justify-content: center;
+  justify-content: center;
+  max-width: 320px;
+}
+.ctrl-key {
+  background: #2e3350;
+  border: 2px solid #1a1c2c;
+  color: #f4ead8;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 2px 5px;
+  letter-spacing: 1px;
+}
+
+/* Touch buttons for mobile */
+#touch-btns {
+  display: -webkit-flex;
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+.t-btn {
+  background: #2e3350;
+  border: 2px solid #1a1c2c;
+  border-top: 2px solid #5a6394;
+  border-left: 2px solid #5a6394;
+  color: #f4ead8;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 8px 12px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  letter-spacing: 1px;
+  min-width: 44px;
+  text-align: center;
+}
+.t-btn:active {
+  border-top: 2px solid #1a1c2c;
+  border-left: 2px solid #1a1c2c;
+  border-bottom: 2px solid #5a6394;
+  border-right: 2px solid #5a6394;
+  background: #1a1c2c;
+  color: #5a6394;
+}
+
+/* ===== 説明書オーバーレイ ===== */
+#help-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,28,44,0.92);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+#help-overlay.show { display: flex; }
+#help-book {
+  background: #f4ead8;
+  border: 4px solid #1a1c2c;
+  box-shadow: 4px 4px 0 #1a1c2c, inset 0 0 0 2px #5a6394;
+  max-width: 380px;
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 16px;
+  font-family: 'Courier New', Courier, monospace;
+  color: #1a1c2c;
+}
+#help-book h3 {
+  font-size: 15px;
+  letter-spacing: 2px;
+  text-align: center;
+  border-bottom: 3px double #1a1c2c;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+#help-book h4 {
+  font-size: 12px;
+  background: #1a1c2c;
+  color: #f4ead8;
+  padding: 3px 7px;
+  margin: 12px 0 5px;
+  letter-spacing: 1px;
+}
+#help-book p {
+  font-size: 11px;
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+#help-book table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 11px;
+}
+#help-book th, #help-book td {
+  border: 2px solid #1a1c2c;
+  padding: 3px 6px;
+  text-align: center;
+}
+#help-book th { background: #2e3350; color: #f4ead8; }
+#help-book td { background: #5a6394; }
+#help-book .gb-btn {
+  display: block;
+  margin: 14px auto 4px;
+}
+</style>
+</head>
+<body>
+
+<div id="outer-frame">
+  <div id="screen">
+    <div id="field-wrap">
+      <canvas id="field" width="150" height="250"></canvas>
+      <div id="overlay">
+        <h2>JEWEL<br>DROP</h2>
+        <p>同じ宝石を3つ並べて消そう！<br>縦・横・斜めOK<br>連鎖でスコアUP!</p>
+        <p id="title-best" style="color:#ffd34e;font-size:10px"></p>
+        <button class="gb-btn" id="start-btn">START</button>
+        <p style="font-size:8px;opacity:0.6">Ver.0.4 ／ ？ボタンで説明書</p>
+      </div>
+    </div>
+
+    <div id="side">
+      <div class="next-box">
+        <canvas id="next-c" width="40" height="66"></canvas>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">LEVEL</div>
+        <div class="stat-value" id="ui-level">00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">JEWEL</div>
+        <div class="stat-value" id="ui-jewel">100</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">CHAIN</div>
+        <div class="stat-value" id="ui-chain">00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">MAX</div>
+        <div class="stat-value" id="ui-max">00</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">SCORE</div>
+        <div class="stat-value sm" id="ui-score">00000</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <span class="ctrl-key">← → 移動</span>
+  <span class="ctrl-key">↑ 回転</span>
+  <span class="ctrl-key">↓ 高速</span>
+  <span class="ctrl-key">SPC 落下</span>
+  <span class="ctrl-key">P ポーズ</span>
+</div>
+
+<!-- タッチ操作ボタン -->
+<div id="touch-btns">
+  <button class="t-btn" id="btn-left">◀</button>
+  <button class="t-btn" id="btn-rot">↻</button>
+  <button class="t-btn" id="btn-right">▶</button>
+  <button class="t-btn" id="btn-down">▼</button>
+  <button class="t-btn" id="btn-drop">DROP</button>
+  <button class="t-btn" id="btn-pause">&#9646;&#9646;</button>
+  <button class="t-btn" id="btn-help">？</button>
+</div>
+
+<!-- 説明書オーバーレイ -->
+<div id="help-overlay">
+  <div id="help-book">
+    <h3>📖 あそびかた</h3>
+
+    <h4>■ ルール</h4>
+    <p>宝石が3つ縦に並んだピースが落ちてきます。<br>
+    同じ形の宝石を <b>タテ・ヨコ・ナナメに3つ以上</b> 並べると消えます。<br>
+    宝石は全部で6種類：<b style="color:#d63a4a">●ルビー</b> <b style="color:#2fae57">▲エメラルド</b> <b style="color:#3a6fd8">◆サファイア</b> <b style="color:#c08a10">✚トパーズ</b> <b style="color:#9347cc">■アメジスト</b> <b style="color:#1fa8b5">★アクアマリン</b></p>
+
+    <h4>■ 操作（キーボード）</h4>
+    <p>← → … 左右移動<br>
+    ↑ … 宝石の並び順を回転<br>
+    ↓ … 高速落下<br>
+    Space … 一気に落とす<br>
+    P … ポーズ</p>
+
+    <h4>■ 操作（スマホ）</h4>
+    <p>画面ボタン … ◀▶移動 / ↻回転 / ▼高速 / DROP即落下 / ⏸ポーズ<br>
+    フィールドを左右になぞる … 移動<br>
+    タップ or 上スワイプ … 回転<br>
+    下スワイプ … 一気に落とす</p>
+
+    <h4>■ 回転って？</h4>
+    <p>ピースの形は変わらず、<b>3つの宝石の順番がぐるっと入れ替わります</b>。<br>
+    例：上から「丸・柱・しずく」→ 回転 →「柱・しずく・丸」</p>
+
+    <h4>■ 連鎖（チェイン）</h4>
+    <p>消えた後、上の宝石が落ちてきて、また3つ揃うと<b>連鎖</b>！<br>
+    連鎖するほど倍率が倍々で増えます。</p>
+    <table>
+      <tr><th>連鎖</th><th>倍率</th><th>3個消しの得点</th></tr>
+      <tr><td>1連鎖</td><td>×1</td><td>30点</td></tr>
+      <tr><td>2連鎖</td><td>×2</td><td>60点</td></tr>
+      <tr><td>3連鎖</td><td>×4</td><td>120点</td></tr>
+      <tr><td>4連鎖</td><td>×8</td><td>240点</td></tr>
+      <tr><td>5連鎖</td><td>×16</td><td>480点</td></tr>
+    </table>
+    <p>得点 = 消したマス数 × 10 × 連鎖倍率<br>
+    4個以上の同時消しもマス数が増えてお得！</p>
+
+    <h4>■ 画面の見かた</h4>
+    <p><b>LEVEL</b> … スコア500点ごとに+1。上がると落下が速くなる<br>
+    <b>JEWEL</b> … 残り手数。ピースを置くたびに1減り、0でゲームオーバー<br>
+    <b>CHAIN</b> … いま起きている連鎖数<br>
+    <b>MAX</b> … 今回の最高連鎖記録<br>
+    <b>SCORE</b> … 合計得点</p>
+
+    <h4>■ コツ</h4>
+    <p>「ここが消えたら、上から落ちて次が揃う」形をわざと仕込むのが高得点の秘訣。<br>
+    縦に同じ宝石を積んでおいて、最後に横を揃えて崩すのが定番です！</p>
+
+    <button class="gb-btn" id="help-close">とじる</button>
+  </div>
+</div>
+
+<script>
+// ==============================
+// PALETTE
+// ==============================
+var C = {
+  d3: '#1a1c2c',
+  d2: '#2e3350',
+  d1: '#5a6394',
+  d0: '#f4ead8',
+  hi: '#ffd34e'
+};
+
+// ==============================
+// CONSTANTS
+// ==============================
+var CELL = 25;
+var COLS = 6;
+var ROWS = 10;
+var JTYPES = 6;
+
+var fc = document.getElementById('field');
+var ctx = fc.getContext('2d');
+var nc = document.getElementById('next-c');
+var nctx = nc.getContext('2d');
+
+// ==============================
+// JEWEL COLORS (GBC風 6色)
+// ==============================
+var JCOL = [
+  {d:'#8f1f2e', m:'#d63a4a', l:'#f4707a', h:'#ffd9c0'}, // 0 ●ルビー(赤)
+  {d:'#1d6b35', m:'#2fae57', l:'#72d985', h:'#d8ffd0'}, // 1 ▲エメラルド(緑)
+  {d:'#1d3f9e', m:'#3a6fd8', l:'#7ab3f5', h:'#d5ecff'}, // 2 ◆サファイア(青)
+  {d:'#9e6f10', m:'#e0a816', l:'#f7d348', h:'#fff3c0'}, // 3 ✚トパーズ(金)
+  {d:'#5e2388', m:'#9347cc', l:'#c684ec', h:'#f0d8ff'}, // 4 ■アメジスト(紫)
+  {d:'#0f7580', m:'#1fb3c0', l:'#66e0e5', h:'#e0ffff'}, // 5 ★アクアマリン(水色)
+];
+
+// ==============================
+// DRAW JEWEL — 形×色で6種を見分ける
+// 0:●丸  1:▲三角  2:◆縞ひし形  3:✚十字  4:■市松  5:★星
+// ==============================
+function drawJewel(ct, px, py, type, sz) {
+  var s = sz || CELL;
+  var cx = px + s/2;
+  var cy = py + s/2;
+  var r = Math.floor(s * 0.40);
+  var P = JCOL[type % 6];
+  ct.save();
+
+  if (type === 0) {
+    // ● ルビーの丸 — 明るい本体に濃いリング
+    drawCirc(ct, cx+1, cy+1, r, P.d);
+    drawCirc(ct, cx, cy, r, P.m);
+    drawCirc(ct, cx-1, cy-1, r-3, P.l);
+    ct.strokeStyle = P.d; ct.lineWidth = 2;
+    ct.beginPath(); ct.arc(cx, cy, r-2, 0, Math.PI*2); ct.stroke();
+    drawCirc(ct, cx, cy, 2, P.d);
+    ct.fillStyle = P.h; ct.fillRect(cx-r*0.5, cy-r*0.55, 3, 3);
+
+  } else if (type === 1) {
+    // ▲ エメラルドの三角 — 二重三角
+    var tri = function(ox, oy, rad, col) {
+      ct.fillStyle = col;
+      ct.beginPath();
+      ct.moveTo(cx+ox, cy+oy-rad);
+      ct.lineTo(cx+ox+rad, cy+oy+rad*0.75);
+      ct.lineTo(cx+ox-rad, cy+oy+rad*0.75);
+      ct.closePath(); ct.fill();
+    };
+    tri(1, 1, r+1, P.d);
+    tri(0, 0, r+1, P.m);
+    tri(0, 2, r*0.45, P.l);
+    ct.fillStyle = P.h; ct.fillRect(cx-1, cy-r+4, 2, 3);
+
+  } else if (type === 2) {
+    // ◆ サファイアのひし形 — 横縞
+    drawDiamond(ct, cx+1, cy+1, r+1, r+2, P.d);
+    drawDiamond(ct, cx, cy, r+1, r+2, P.m);
+    ct.save();
+    ct.beginPath();
+    ct.moveTo(cx, cy-r-1);
+    ct.lineTo(cx+r, cy);
+    ct.lineTo(cx, cy+r+1);
+    ct.lineTo(cx-r, cy);
+    ct.closePath();
+    ct.clip();
+    ct.fillStyle = P.l;
+    for (var yy = -r; yy <= r; yy += 5) {
+      ct.fillRect(cx-r, cy+yy, r*2, 2);
+    }
+    ct.restore();
+    ct.fillStyle = P.h; ct.fillRect(cx-1, cy-r+2, 2, 2);
+
+  } else if (type === 3) {
+    // ✚ トパーズの十字
+    var arm = Math.floor(r*0.55);
+    var len = r+1;
+    ct.fillStyle = P.d;
+    ct.fillRect(cx-arm+1, cy-len+1, arm*2, len*2);
+    ct.fillRect(cx-len+1, cy-arm+1, len*2, arm*2);
+    ct.fillStyle = P.m;
+    ct.fillRect(cx-arm, cy-len, arm*2, len*2);
+    ct.fillRect(cx-len, cy-arm, len*2, arm*2);
+    ct.fillStyle = P.l;
+    ct.fillRect(cx-arm+2, cy-arm+2, arm*2-4, arm*2-4);
+    ct.fillStyle = P.h; ct.fillRect(cx-arm+2, cy-len+2, 3, 3);
+
+  } else if (type === 4) {
+    // ■ アメジストの市松
+    var bx = px+4, by = py+4, bw = s-8, bh = s-8;
+    ct.fillStyle = P.d; ct.fillRect(bx+1, by+1, bw, bh);
+    ct.fillStyle = P.l; ct.fillRect(bx, by, bw, bh);
+    var q = Math.floor(bw/2);
+    ct.fillStyle = P.m;
+    ct.fillRect(bx, by, q, q);
+    ct.fillRect(bx+q, by+q, bw-q, bh-q);
+    ct.strokeStyle = P.d; ct.lineWidth = 2;
+    ct.strokeRect(bx, by, bw, bh);
+    ct.fillStyle = P.h; ct.fillRect(bx+2, by+2, 2, 2);
+
+  } else {
+    // ★ アクアマリンの星
+    var star = function(ox, oy, rad, col) {
+      ct.fillStyle = col;
+      ct.beginPath();
+      for (var i = 0; i < 10; i++) {
+        var ang = Math.PI/2 + i * Math.PI/5;
+        var rr = (i % 2 === 0) ? rad : rad*0.45;
+        var xx = cx+ox + rr*Math.cos(ang);
+        var yy2 = cy+oy - rr*Math.sin(ang);
+        if (i===0) ct.moveTo(xx, yy2); else ct.lineTo(xx, yy2);
+      }
+      ct.closePath(); ct.fill();
+    };
+    star(1, 1, r+2, P.d);
+    star(0, 0, r+2, P.m);
+    star(0, 0, r*0.8, P.l);
+    ct.fillStyle = P.h; ct.fillRect(cx-1, cy-r*0.45, 2, 2);
+  }
+
+  ct.restore();
+}
+
+function drawCirc(ct, cx, cy, r, col) {
+  if (r <= 0) return;
+  ct.fillStyle = col;
+  ct.beginPath();
+  ct.arc(cx, cy, r, 0, Math.PI*2);
+  ct.fill();
+}
+
+function drawOval(ct, cx, cy, rx, ry, col) {
+  if (rx <= 0 || ry <= 0) return;
+  ct.fillStyle = col;
+  ct.beginPath();
+  ct.save();
+  ct.translate(cx, cy);
+  ct.scale(rx, ry);
+  ct.arc(0, 0, 1, 0, Math.PI*2);
+  ct.restore();
+  ct.fill();
+}
+
+function drawDiamond(ct, cx, cy, hw, hh, col) {
+  ct.fillStyle = col;
+  ct.beginPath();
+  ct.moveTo(cx, cy-hh);
+  ct.lineTo(cx+hw, cy);
+  ct.lineTo(cx, cy+hh);
+  ct.lineTo(cx-hw, cy);
+  ct.closePath();
+  ct.fill();
+}
+
+function drawHex(ct, cx, cy, r, col) {
+  if (r <= 0) return;
+  ct.fillStyle = col;
+  ct.beginPath();
+  for (var i = 0; i < 6; i++) {
+    var a = Math.PI/180*(60*i - 30);
+    var hx = cx + r*Math.cos(a);
+    var hy = cy + r*Math.sin(a);
+    if (i === 0) ct.moveTo(hx, hy);
+    else ct.lineTo(hx, hy);
+  }
+  ct.closePath();
+  ct.fill();
+}
+
+function drawLeaf(ct, cx, cy, r, col) {
+  if (r <= 0) return;
+  ct.fillStyle = col;
+  ct.beginPath();
+  ct.moveTo(cx, cy-r);
+  ct.bezierCurveTo(cx+r*0.8, cy-r*0.3, cx+r*0.8, cy+r*0.5, cx, cy+r*0.7);
+  ct.bezierCurveTo(cx-r*0.8, cy+r*0.5, cx-r*0.8, cy-r*0.3, cx, cy-r);
+  ct.closePath();
+  ct.fill();
+}
+
+// ==============================
+// GAME STATE
+// ==============================
+var board, piece, nextPiece;
+var score, level, jewel, chain, maxChain;
+var gameOver, paused, animating;
+var dropTimer, dropInterval;
+var flashCells;
+var lastTime = 0;
+
+function initGame() {
+  board = [];
+  for (var i = 0; i < ROWS; i++) {
+    board.push([]);
+    for (var j = 0; j < COLS; j++) board[i].push(-1);
+  }
+  score = 0; level = 0; jewel = 100; chain = 0; maxChain = 0;
+  gameOver = false; paused = false; animating = false;
+  dropTimer = 0; dropInterval = 1000;
+  flashCells = [];
+  nextPiece = genPiece();
+  piece = genPiece();
+  // Start piece at top (y=0, enters from above)
+  piece.y = -2;
+  updateUI();
+}
+
+function genPiece() {
+  return {
+    x: Math.floor(COLS/2) - 1,
+    y: 0,
+    gems: [
+      Math.floor(Math.random() * JTYPES),
+      Math.floor(Math.random() * JTYPES),
+      Math.floor(Math.random() * JTYPES)
+    ]
+  };
+}
+
+// ==============================
+// VALIDATION
+// ==============================
+function isValid(nx, ny) {
+  for (var i = 0; i < 3; i++) {
+    var r = ny + i;
+    var c = nx;
+    if (c < 0 || c >= COLS) return false;
+    if (r >= ROWS) return false;
+    if (r >= 0 && board[r][c] !== -1) return false;
+  }
+  return true;
+}
+
+// ==============================
+// MOVEMENT
+// ==============================
+function moveLeft()  { if (!animating && isValid(piece.x-1, piece.y)) piece.x--; }
+function moveRight() { if (!animating && isValid(piece.x+1, piece.y)) piece.x++; }
+function rotatePiece() {
+  if (!animating) piece.gems = [piece.gems[1], piece.gems[2], piece.gems[0]];
+}
+function hardDrop() {
+  if (animating) return;
+  while (isValid(piece.x, piece.y+1)) { piece.y++; score++; }
+  lock();
+}
+function softDrop() {
+  if (animating) return;
+  if (isValid(piece.x, piece.y+1)) { piece.y++; dropTimer=0; score++; }
+  else lock();
+}
+function autoFall() {
+  if (isValid(piece.x, piece.y+1)) piece.y++;
+  else lock();
+}
+
+// ==============================
+// LOCK & RESOLVE
+// ==============================
+function lock() {
+  for (var i = 0; i < 3; i++) {
+    var r = piece.y + i;
+    if (r < 0) { endGame(); return; }
+    board[r][piece.x] = piece.gems[i];
+  }
+  jewel = Math.max(0, jewel - 1);
+  if (jewel <= 0) { endGame(); return; }
+  chain = 0;
+  resolveMatches();
+}
+
+function resolveMatches() {
+  animating = true;
+  var matched = findMatches();
+  if (matched.length === 0) {
+    animating = false;
+    piece = nextPiece;
+    piece.y = -2;
+    nextPiece = genPiece();
+    updateUI();
+    if (!isValid(piece.x, piece.y) && !isValid(piece.x, piece.y+1)) {
+      endGame();
+    }
+    return;
+  }
+
+  chain++;
+  if (chain > maxChain) maxChain = chain;
+  updateUI();
+
+  flashCells = matched;
+  var flashCount = 0;
+  var fi = setInterval(function() {
+    flashCount++;
+    if (flashCount >= 6) {
+      clearInterval(fi);
+      for (var k = 0; k < matched.length; k++) {
+        board[matched[k][0]][matched[k][1]] = -1;
+      }
+      flashCells = [];
+      // 連鎖倍率: 1連鎖=×1, 2連鎖=×2, 3連鎖=×4, 4連鎖=×8...
+      var mult = Math.pow(2, chain - 1);
+      score += matched.length * 10 * mult;
+      level = Math.floor(score / 500);
+      dropInterval = Math.max(150, 1000 - level*80);
+      applyGravity();
+      updateUI();
+      setTimeout(resolveMatches, 150);
+    }
+  }, 80);
+}
+
+function findMatches() {
+  var marked = {};
+  function mark(r,c) { marked[r+','+c] = [r,c]; }
+  var r, c, run, k;
+
+  // Horizontal
+  for (r = 0; r < ROWS; r++) {
+    run = 1;
+    for (c = 1; c <= COLS; c++) {
+      if (c < COLS && board[r][c] !== -1 && board[r][c] === board[r][c-1]) {
+        run++;
+      } else {
+        if (run >= 3) for (k=c-run;k<c;k++) mark(r,k);
+        run = 1;
+      }
+    }
+  }
+  // Vertical
+  for (c = 0; c < COLS; c++) {
+    run = 1;
+    for (r = 1; r <= ROWS; r++) {
+      if (r < ROWS && board[r][c] !== -1 && board[r][c] === board[r-1][c]) {
+        run++;
+      } else {
+        if (run >= 3) for (k=r-run;k<r;k++) mark(k,c);
+        run = 1;
+      }
+    }
+  }
+  // Diagonal ↘
+  for (r = 0; r < ROWS; r++) {
+    for (c = 0; c < COLS; c++) {
+      if (board[r][c] === -1) continue;
+      run = 1;
+      while (r+run<ROWS && c+run<COLS && board[r+run][c+run]===board[r][c]) run++;
+      if (run >= 3) for (k=0;k<run;k++) mark(r+k,c+k);
+    }
+  }
+  // Diagonal ↙
+  for (r = 0; r < ROWS; r++) {
+    for (c = COLS-1; c >= 0; c--) {
+      if (board[r][c] === -1) continue;
+      run = 1;
+      while (r+run<ROWS && c-run>=0 && board[r+run][c-run]===board[r][c]) run++;
+      if (run >= 3) for (k=0;k<run;k++) mark(r+k,c-k);
+    }
+  }
+
+  var result = [];
+  for (var key in marked) result.push(marked[key]);
+  return result;
+}
+
+function applyGravity() {
+  for (var c = 0; c < COLS; c++) {
+    var write = ROWS-1;
+    for (var r = ROWS-1; r >= 0; r--) {
+      if (board[r][c] !== -1) {
+        board[write][c] = board[r][c];
+        if (write !== r) board[r][c] = -1;
+        write--;
+      }
+    }
+    while (write >= 0) { board[write][c] = -1; write--; }
+  }
+}
+
+// ==============================
+// UI
+// ==============================
+function pad2(n)  { return n < 10 ? '0'+n : ''+n; }
+function pad3(n)  { var s=''+n; while(s.length<3) s='0'+s; return s; }
+function pad5(n)  { var s=''+n; while(s.length<5) s='0'+s; return s; }
+
+function updateUI() {
+  document.getElementById('ui-level').textContent = pad2(level);
+  document.getElementById('ui-jewel').textContent = pad3(jewel);
+  document.getElementById('ui-chain').textContent = pad2(chain);
+  document.getElementById('ui-max').textContent   = pad2(maxChain);
+  document.getElementById('ui-score').textContent = pad5(score);
+}
+
+// ==============================
+// DRAW
+// ==============================
+function drawField() {
+  ctx.fillStyle = C.d0;
+  ctx.fillRect(0, 0, fc.width, fc.height);
+
+  // Grid dots
+  ctx.fillStyle = C.d1;
+  for (var r = 0; r < ROWS; r++) {
+    for (var c = 0; c < COLS; c++) {
+      ctx.fillRect(c*CELL+CELL-2, r*CELL+CELL-2, 1, 1);
+    }
+  }
+
+  // Board jewels
+  var ft = (Math.floor(Date.now()/80)) % 2;
+  for (var rr = 0; rr < ROWS; rr++) {
+    for (var cc = 0; cc < COLS; cc++) {
+      if (board[rr][cc] === -1) continue;
+      var isFlash = false;
+      for (var fi2=0; fi2<flashCells.length; fi2++) {
+        if (flashCells[fi2][0]===rr && flashCells[fi2][1]===cc) { isFlash=true; break; }
+      }
+      if (isFlash) {
+        ctx.fillStyle = ft ? C.hi : C.d0;
+        ctx.fillRect(cc*CELL, rr*CELL, CELL, CELL);
+      } else {
+        drawJewel(ctx, cc*CELL, rr*CELL, board[rr][cc], CELL);
+      }
+    }
+  }
+
+  // Current piece
+  if (!animating && piece) {
+    // Ghost
+    var gy = piece.y;
+    while (isValid(piece.x, gy+1)) gy++;
+    if (gy > piece.y) {
+      ctx.globalAlpha = 0.22;
+      for (var gi=0; gi<3; gi++) {
+        var gr = gy+gi;
+        if (gr >= 0 && gr < ROWS) drawJewel(ctx, piece.x*CELL, gr*CELL, piece.gems[gi], CELL);
+      }
+      ctx.globalAlpha = 1.0;
+    }
+    // Actual piece
+    for (var pi=0; pi<3; pi++) {
+      var pr = piece.y+pi;
+      if (pr >= 0 && pr < ROWS) drawJewel(ctx, piece.x*CELL, pr*CELL, piece.gems[pi], CELL);
+    }
+  }
+
+  // Border stripes
+  for (var br=0; br<ROWS; br++) {
+    ctx.fillStyle = (br%2===0) ? C.d2 : C.d3;
+    ctx.fillRect(0, br*CELL, 3, CELL);
+    ctx.fillRect(fc.width-3, br*CELL, 3, CELL);
+    ctx.fillStyle = C.d1;
+    ctx.fillRect(0, br*CELL+CELL/2-1, 3, 2);
+    ctx.fillRect(fc.width-3, br*CELL+CELL/2-1, 3, 2);
+  }
+}
+
+function drawNext() {
+  nctx.fillStyle = C.d0;
+  nctx.fillRect(0, 0, nc.width, nc.height);
+  if (!nextPiece) return;
+  var sz = 20;
+  var ox = Math.floor((nc.width - sz)/2);
+  for (var i=0; i<3; i++) {
+    drawJewel(nctx, ox, 2+i*sz, nextPiece.gems[i], sz);
+  }
+}
+
+// ==============================
+// HIGH SCORE (localStorage保存)
+// ※一部の閲覧環境では保存できないため、その場合はセッション内のみ記憶
+// ==============================
+var HS_KEY = 'gbJewelHighScores';
+var memScores = []; // localStorage不可時のフォールバック
+
+function loadScores() {
+  try {
+    var raw = localStorage.getItem(HS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* localStorage使用不可 */ }
+  return memScores;
+}
+
+function saveScores(list) {
+  memScores = list;
+  try { localStorage.setItem(HS_KEY, JSON.stringify(list)); } catch (e) {}
+}
+
+// 記録を追加してTOP5を返す。戻り値: 今回の順位(1始まり、圏外は-1)
+function recordScore(sc, lv, mx) {
+  var list = loadScores();
+  var entry = { score: sc, level: lv, maxChain: mx, date: dateStr() };
+  list.push(entry);
+  list.sort(function(a, b){ return b.score - a.score; });
+  list = list.slice(0, 5);
+  saveScores(list);
+  var rank = -1;
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] === entry) { rank = i + 1; break; }
+  }
+  return rank;
+}
+
+function dateStr() {
+  var d = new Date();
+  return (d.getMonth()+1) + '/' + d.getDate();
+}
+
+function scoreTableHTML(highlightRank) {
+  var list = loadScores();
+  if (list.length === 0) return '';
+  var html = '<table style="border-collapse:collapse;margin:4px auto;font-size:9px;color:#f4ead8">';
+  html += '<tr><th style="padding:1px 6px">RANK</th><th style="padding:1px 6px">SCORE</th><th style="padding:1px 6px">CHAIN</th><th style="padding:1px 6px">DATE</th></tr>';
+  for (var i = 0; i < list.length; i++) {
+    var hl = (i+1 === highlightRank) ? 'color:#ffd34e;font-weight:bold' : '';
+    html += '<tr style="' + hl + '">' +
+      '<td style="padding:1px 6px">' + (i+1) + (i+1===highlightRank?' ◀':'') + '</td>' +
+      '<td style="padding:1px 6px">' + pad5(list[i].score) + '</td>' +
+      '<td style="padding:1px 6px">' + pad2(list[i].maxChain) + '</td>' +
+      '<td style="padding:1px 6px">' + (list[i].date||'') + '</td></tr>';
+  }
+  html += '</table>';
+  return html;
+}
+
+// ==============================
+// GAME OVER
+// ==============================
+function endGame() {
+  if (gameOver) return; // 二重呼び出し防止（記録の重複バグ対策）
+  gameOver = true;
+  var rank = recordScore(score, level, maxChain);
+  var ov = document.getElementById('overlay');
+  var rankMsg = '';
+  if (rank === 1)      rankMsg = '<p style="color:#ffd34e">★ NEW RECORD!! ★</p>';
+  else if (rank > 0)   rankMsg = '<p style="color:#ffd34e">ランクイン! ' + rank + '位</p>';
+  ov.innerHTML =
+    '<h2>GAME<br>OVER</h2>' +
+    rankMsg +
+    '<p>SCORE ' + pad5(score) + '<br>' +
+    'MAX CHAIN ' + pad2(maxChain) + '</p>' +
+    '<p style="font-size:8px;letter-spacing:1px;margin-top:2px">- BEST 5 -</p>' +
+    scoreTableHTML(rank) +
+    '<button class="gb-btn" id="start-btn">RETRY</button>';
+  ov.style.display = '-webkit-flex';
+  ov.style.display = 'flex';
+  document.getElementById('start-btn').addEventListener('click', startGame);
+}
+
+// ==============================
+// MAIN LOOP
+// ==============================
+function loop(ts) {
+  var dt = ts - lastTime;
+  if (dt > 200) dt = 200; // clamp on tab-switch
+  lastTime = ts;
+
+  if (!gameOver && !paused && piece) {
+    if (!animating) {
+      dropTimer += dt;
+      if (dropTimer >= dropInterval) {
+        dropTimer = 0;
+        autoFall();
+      }
+    }
+    drawField();
+    drawNext();
+  }
+  requestAnimationFrame(loop);
+}
+
+// ==============================
+// PAUSE
+// ==============================
+function togglePause() {
+  if (gameOver || !piece) return;
+  paused = !paused;
+  var pb = document.getElementById('btn-pause');
+  if (paused) {
+    if (pb) pb.innerHTML = '&#9654;'; // ▶
+    drawPauseScreen();
+  } else {
+    if (pb) pb.innerHTML = '&#9646;&#9646;'; // ⏸
+  }
+}
+
+function drawPauseScreen() {
+  ctx.fillStyle = 'rgba(26,28,44,0.85)';
+  ctx.fillRect(0, 0, fc.width, fc.height);
+  ctx.fillStyle = C.d0;
+  ctx.font = 'bold 18px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PAUSE', fc.width/2, fc.height/2 - 10);
+  ctx.font = 'bold 9px "Courier New", monospace';
+  ctx.fillStyle = C.d1;
+  ctx.fillText('P / \u23F8 \u3067\u518D\u958B', fc.width/2, fc.height/2 + 14);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+// ==============================
+// KEYBOARD
+// ==============================
+document.addEventListener('keydown', function(e) {
+  var k = e.key;
+  if (k==='ArrowLeft'||k==='ArrowRight'||k==='ArrowDown'||k==='ArrowUp'||k===' ') {
+    e.preventDefault();
+  }
+  if (gameOver) return;
+  if (k==='p'||k==='P') { togglePause(); return; }
+  if (paused) return;  // ポーズ中は操作不可
+  if (k==='ArrowLeft')  moveLeft();
+  else if (k==='ArrowRight') moveRight();
+  else if (k==='ArrowUp')    rotatePiece();
+  else if (k==='ArrowDown')  softDrop();
+  else if (k===' ')          hardDrop();
+});
+
+// ==============================
+// TOUCH BUTTONS (スマホ用ボタン)
+// ==============================
+function addBtn(id, fn) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('touchstart', function(e) { e.preventDefault(); fn(); }, {passive:false});
+  el.addEventListener('mousedown', function(e) { e.preventDefault(); fn(); });
+}
+
+// 単発ボタン（回転・即落下・ポーズ。左右/下は下のholdBtnで登録）
+addBtn('btn-rot',   function(){ if(!paused && !gameOver && !animating) rotatePiece(); });
+addBtn('btn-drop',  function(){ if(!paused && !gameOver && !animating) hardDrop(); });
+addBtn('btn-pause', togglePause);
+
+// ==============================
+// HELP (説明書)
+// ==============================
+(function(){
+  var ho = document.getElementById('help-overlay');
+  var wasPausedByHelp = false;
+  function openHelp() {
+    // プレイ中なら自動ポーズ
+    if (!gameOver && piece && !paused) {
+      togglePause();
+      wasPausedByHelp = true;
+    }
+    ho.classList.add('show');
+  }
+  function closeHelp() {
+    ho.classList.remove('show');
+    // 説明書で自動ポーズした場合だけ自動再開
+    if (wasPausedByHelp && paused) togglePause();
+    wasPausedByHelp = false;
+  }
+  addBtn('btn-help', openHelp);
+  document.getElementById('help-close').addEventListener('click', closeHelp);
+  // 背景タップでも閉じる
+  ho.addEventListener('click', function(e){ if (e.target === ho) closeHelp(); });
+})();
+
+// 長押しで連続移動（タップ1回でも1回だけ動く）
+(function(){
+  function holdBtn(id, fn) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var timer = null;
+    function start(e) { e.preventDefault(); fn(); timer = setInterval(fn, 120); }
+    function stop()   { clearInterval(timer); timer = null; }
+    el.addEventListener('touchstart', start, {passive:false});
+    el.addEventListener('touchend',   stop,  {passive:false});
+    el.addEventListener('mousedown',  start);
+    el.addEventListener('mouseup',    stop);
+    el.addEventListener('mouseleave', stop);
+  }
+  holdBtn('btn-left',  function(){ if(!paused && !gameOver && !animating) moveLeft(); });
+  holdBtn('btn-right', function(){ if(!paused && !gameOver && !animating) moveRight(); });
+  holdBtn('btn-down',  function(){ if(!paused && !gameOver && !animating) softDrop(); });
+})();
+
+// ==============================
+// SWIPE GESTURES (フィールド上のスワイプ操作)
+// 左右スワイプ=移動 / 上=回転 / 下=即落下 / タップ=回転
+// ==============================
+(function(){
+  var sx=0, sy=0, st=0, moved=false;
+  var SWIPE_MIN = 24;   // px
+  fc.addEventListener('touchstart', function(e){
+    if (e.touches.length > 1) return;
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    st = Date.now();
+    moved = false;
+  }, {passive:true});
+
+  // ドラッグ中の横移動（指の動きに追従）
+  fc.addEventListener('touchmove', function(e){
+    if (gameOver || animating || paused || !piece) return;
+    var dx = e.touches[0].clientX - sx;
+    if (Math.abs(dx) >= SWIPE_MIN) {
+      if (dx > 0) moveRight(); else moveLeft();
+      sx = e.touches[0].clientX; // 連続スワイプ対応
+      moved = true;
+    }
+  }, {passive:true});
+
+  fc.addEventListener('touchend', function(e){
+    if (gameOver || animating || paused || !piece) return;
+    var dx = e.changedTouches[0].clientX - sx;
+    var dy = e.changedTouches[0].clientY - sy;
+    var dt = Date.now() - st;
+    if (!moved) {
+      if (dy > 40) {
+        hardDrop();              // 下スワイプ = 即落下
+      } else if (dy < -SWIPE_MIN) {
+        rotatePiece();           // 上スワイプ = 回転
+      } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && dt < 300) {
+        rotatePiece();           // タップ = 回転
+      }
+    }
+  }, {passive:true});
+})();
+
+// ==============================
+// START
+// ==============================
+function startGame() {
+  var ov = document.getElementById('overlay');
+  ov.style.display = 'none';
+  var pb = document.getElementById('btn-pause');
+  if (pb) pb.innerHTML = '&#9646;&#9646;';
+  initGame();
+  drawNext();
+}
+
+document.getElementById('start-btn').addEventListener('click', startGame);
+
+// init safe state
+gameOver  = true;
+paused    = false;
+animating = false;
+piece     = null;
+nextPiece = null;
+board     = [];
+for (var _i=0;_i<ROWS;_i++){board.push([]);for(var _j=0;_j<COLS;_j++)board[_i].push(-1);}
+flashCells = [];
+
+ctx.fillStyle = C.d0;
+ctx.fillRect(0, 0, fc.width, fc.height);
+
+// ==============================
+// BLOCK iOS ZOOM (double-tap & pinch)
+// iOS ignores user-scalable=no, so block via JS
+// ==============================
+(function(){
+  var lastTouchEnd = 0;
+  // double-tap zoom block
+  document.addEventListener('touchend', function(e){
+    var now = Date.now();
+    if (now - lastTouchEnd <= 300) e.preventDefault();
+    lastTouchEnd = now;
+  }, {passive: false});
+  // pinch zoom block
+  document.addEventListener('touchmove', function(e){
+    if (e.touches.length > 1) e.preventDefault();
+  }, {passive: false});
+  document.addEventListener('gesturestart', function(e){
+    e.preventDefault();
+  }, {passive: false});
+})();
+
+// タイトルにベストスコア表示
+(function(){
+  var list = loadScores();
+  if (list.length > 0) {
+    var el = document.getElementById('title-best');
+    if (el) el.innerHTML = 'BEST: ' + pad5(list[0].score) + ' (CHAIN ' + pad2(list[0].maxChain) + ')';
+  }
+})();
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
